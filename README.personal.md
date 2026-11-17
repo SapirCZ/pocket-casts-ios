@@ -24,6 +24,20 @@ Then run:
 bash scripts/personal/bootstrap.sh
 ```
 
+The original staging scheme embeds an Apple Watch app, so it requires both iOS
+26.5 and watchOS 26.5 simulator runtimes. Install their Universal variants from
+Terminal when missing, then rerun the bootstrap script:
+
+```sh
+env DEVELOPER_DIR=/Applications/Xcode-26.6.0.app/Contents/Developer \
+  xcodebuild -downloadPlatform iOS -buildVersion 26.5 -architectureVariant universal
+env DEVELOPER_DIR=/Applications/Xcode-26.6.0.app/Contents/Developer \
+  xcodebuild -downloadPlatform watchOS -buildVersion 26.5 -architectureVariant universal
+```
+
+The simulator SDK appearing in `xcodebuild -showsdks` is not sufficient evidence
+that the runtime needed by the build destination is installed.
+
 The script uses a compatible Xcode for this process, creates empty external-contributor
 credentials only when absent, and runs the upstream staging simulator build.
 It does not select a signing team or change the system-wide developer directory.
@@ -32,13 +46,22 @@ Build output is saved to ignored `artifacts/personal-build.log`.
 
 Swift packages are resolved by Xcode. Ruby/Fastlane are for the release and automation
 workflows; they are not needed just to invoke the staging build in the Makefile.
+Build-tool plugin commands use `--disable-keychain --disable-netrc` for public packages
+and release artifacts, avoiding repeated prompts to read saved GitHub credentials.
+This is local to those commands and does not change the Mac's Keychain settings.
 
 ## Status
 
 - Upstream 8.19 cloned; personal branch created.
 - Personal product requirements and a proposed Dropbox metadata format recorded.
 - Xcode 26.6 Universal installed; Apple package signature verified.
-- First upstream build is waiting for the user to accept the Xcode license and finish first launch.
+- Xcode license and first launch verified; source package dependencies resolved.
+- iOS 26.5 and watchOS 26.5 Universal runtimes installed.
+- Language and theme resource generation verified on the Intel Mac.
+- `make build_staging` succeeded on the Intel Mac; the simulator app contains x86_64 and arm64 slices.
+- Installed and launched on an iPhone 17 Pro simulator running iOS 26.5. The process
+  remained alive more than 13 minutes after launch.
+- Visual inspection is pending because the Mac was locked when opening Simulator.
 - No Dropbox account connection, device signing, or personal Books functionality yet.
 
 ## Library preparation
