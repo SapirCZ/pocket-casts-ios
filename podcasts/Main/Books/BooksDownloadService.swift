@@ -33,24 +33,35 @@ protocol BooksFileDownloading {
 }
 
 extension DropboxLibraryClient: BooksFileDownloading {
-    func download(_ book: PersonalBook, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
+    func downloadRequest(for book: PersonalBook) async throws -> URLRequest {
         var request = URLRequest(url: URL(string: "https://content.dropboxapi.com/2/files/download")!)
         request.httpMethod = "POST"
+        // Explicitly use the content-download contract; URLSession must not infer a form body.
+        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(try await accessToken())", forHTTPHeaderField: "Authorization")
-        let argument = try JSONEncoder().encode(["path": book.fileID, "rev": book.revision])
+        // Dropbox rejects the retired separate `rev` argument; pin the revision in ReadPath.
+        let argument = try JSONEncoder().encode(["path": "rev:" + book.revision])
         request.setValue(String(decoding: argument, as: UTF8.self), forHTTPHeaderField: "Dropbox-API-Arg")
         if let namespaceID {
             let root = try JSONEncoder().encode([".tag": "namespace_id", "namespace_id": namespaceID])
             request.setValue(String(decoding: root, as: UTF8.self), forHTTPHeaderField: "Dropbox-API-Path-Root")
         }
+        return request
+    }
+
+    func download(_ book: PersonalBook, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
+        let request = try await downloadRequest(for: book)
         let delegate = BooksDownloadProgress(expectedSize: book.size, update: progress)
         let (file, response) = try await session.download(for: request, delegate: delegate)
         do {
             try Task.checkCancellation()
-            guard let http = response as? HTTPURLResponse else { throw BooksError.invalidResponse }
+            guard let http = response as? HTTPURLResponse else { throw BooksError.downloadResponse }
+            // Diagnostics deliberately contain no URL, credentials, filenames, metadata, or response body.
+            let hasMetadata = http.value(forHTTPHeaderField: "Dropbox-API-Result") != nil
+            FileLog.shared.addMessage("Books download HTTP status=\(http.statusCode) metadata=\(hasMetadata)", to: .console)
             guard http.statusCode != 401 else { throw BooksError.authorization }
             guard http.statusCode == 200,
-                  let header = http.value(forHTTPHeaderField: "Dropbox-API-Result") else { throw BooksError.invalidResponse }
+                  let header = http.value(forHTTPHeaderField: "Dropbox-API-Result") else { throw BooksError.downloadResponse }
             let metadata = try JSONDecoder().decode(DropboxDownloadMetadata.self, from: Data(header.utf8))
             guard metadata.id == book.fileID, metadata.rev == book.revision,
                   metadata.size == book.size, metadata.content_hash == book.contentHash else { throw BooksError.changedFile }

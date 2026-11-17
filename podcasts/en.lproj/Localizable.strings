@@ -6699,6 +6699,8 @@
 "books_error_authorization" = "Please reconnect Dropbox to allow this device to read your audiobook library.";
 /* A Dropbox API request failed or returned unexpected metadata. */
 "books_error_response" = "The library could not be read. Check your connection and Dropbox access, then try again.";
+/* A book download request failed before verified audio could be imported. */
+"books_error_download" = "The book could not be downloaded from Dropbox. Please try again.";
 /* The downloaded bytes or revision do not match the selected, pinned book version. */
 "books_error_changed" = "This copy could not be verified against the saved book version. Your listening progress is safe. Try again later.";
 /* File contains no playable audio, has invalid duration, or has an unsupported format. */

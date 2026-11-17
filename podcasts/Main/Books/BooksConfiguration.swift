@@ -19,13 +19,14 @@ struct BooksConfiguration: Decodable {
 }
 
 enum BooksError: LocalizedError, Equatable {
-    case configuration, authorization, invalidResponse, changedFile, invalidAudio, diskSpace, persistence
+    case configuration, authorization, invalidResponse, downloadResponse, changedFile, invalidAudio, diskSpace, persistence
 
     var errorDescription: String? {
         switch self {
         case .configuration: return L10n.booksConnectionPending
         case .authorization: return L10n.booksErrorAuthorization
         case .invalidResponse: return L10n.booksErrorResponse
+        case .downloadResponse: return L10n.booksErrorDownload
         case .changedFile: return L10n.booksErrorChanged
         case .invalidAudio: return L10n.booksErrorAudio
         case .diskSpace: return L10n.booksErrorDiskSpace

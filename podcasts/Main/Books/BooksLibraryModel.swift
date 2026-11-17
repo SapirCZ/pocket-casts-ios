@@ -117,7 +117,10 @@ final class BooksLibraryModel: ObservableObject {
             do {
                 guard entry.isLibraryItem, let id = entry.id, let revision = entry.revision,
                       let hash = entry.contentHash, hash.count == 64,
-                      let size = entry.size, size > 0, size <= UInt64(Int64.max) else { throw BooksError.invalidResponse }
+                      let size = entry.size, size > 0, size <= UInt64(Int64.max) else {
+                    FileLog.shared.addMessage("Books selection metadata invalid: id=\(entry.id != nil) revision=\(entry.revision != nil) hashLength=\(entry.contentHash?.count ?? 0) size=\(entry.size != nil)", to: .console)
+                    throw BooksError.invalidResponse
+                }
                 let account = try await oauth.accountID()
                 let proposed = PersonalBook(accountID: account, fileID: id, revision: revision, contentHash: hash, fileName: entry.name, size: Int64(size))
                 let book = try downloadService.dataManager.obtainPersonalBook(proposed)

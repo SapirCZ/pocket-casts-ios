@@ -82,8 +82,14 @@ This is local to those commands and does not change the Mac's Keychain settings.
   to the current consolidated `Modules` package so module tests actually run.
   Visual checks confirmed the Books tab, Discover navigation from Podcasts, and
   Hebrew podcast search results for “שיר אחד”.
-- Native sign-in and live-download verification are in progress. Device signing,
-  personal bookmarks, bedtime anchors, and journal/export features remain pending.
+- Native sign-in, root/nested folder browsing, and a live MP3 download from the
+  shared Dropbox library were verified in the simulator. The verified audio appears
+  under On this device, with exactly one imported episode and one Up Next row.
+- The content-download request pins revisions using `path: "rev:…"`; Dropbox rejects
+  the retired separate `rev` argument. All 12 focused request/import/catalog tests
+  passed after this correction.
+- Device signing, personal bookmarks, bedtime anchors, and journal/export features
+  remain pending.
 
 ## Local Books configuration
 
