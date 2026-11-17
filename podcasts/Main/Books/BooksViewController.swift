@@ -3,9 +3,18 @@ import SwiftUI
 import UIKit
 
 final class BooksViewController: PCHostingController<BooksLibraryView> {
+    private let presenter: BooksAuthenticationPresenter
+
     init() {
-        super.init(rootView: BooksLibraryView())
+        let presenter = BooksAuthenticationPresenter()
+        self.presenter = presenter
+        super.init(rootView: BooksLibraryView(model: BooksLibraryModel(presenter: presenter)))
         title = L10n.booksTitle
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        presenter.window = view.window
     }
 
     @MainActor dynamic required init?(coder aDecoder: NSCoder) {
@@ -13,35 +22,98 @@ final class BooksViewController: PCHostingController<BooksLibraryView> {
     }
 }
 
+@MainActor
 struct BooksLibraryView: View {
     @EnvironmentObject private var theme: Theme
+    @StateObject var model: BooksLibraryModel
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                Image(systemName: "books.vertical")
-                    .font(.system(size: 48))
-                    .foregroundStyle(AppTheme.color(for: .primaryIcon01, theme: theme))
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(L10n.booksLibraryTitle)
-                        .font(.title2.bold())
-                        .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
-                    Text(L10n.booksLibraryDescription)
-                        .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
+        List {
+            if let name = model.downloadingName {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(name).font(.headline)
+                        if model.validating { ProgressView(L10n.booksValidating) }
+                        else { ProgressView(value: model.progress) }
+                        Text(L10n.booksDownloadKeepOpen).font(.caption)
+                        Button(L10n.cancel) { model.cancelDownload() }
+                    }
+                    .padding(.vertical, 8)
                 }
-
-                Label(L10n.booksConnectionPending, systemImage: "link")
-                    .font(.callout)
-                    .foregroundStyle(AppTheme.color(for: .primaryText02, theme: theme))
-                    .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(AppTheme.color(for: .primaryUi02, theme: theme), in: RoundedRectangle(cornerRadius: 16))
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(24)
+            if let title = model.addedTitle {
+                Label(L10n.booksAddedToQueue(title), systemImage: "checkmark.circle.fill")
+                    .accessibilityAddTraits(.updatesFrequently)
+            }
+            if !model.downloads.isEmpty {
+                Section(L10n.booksOnThisDevice) {
+                    ForEach(model.downloads) { book in
+                        Button { model.queue(book) } label: {
+                            Label(book.title, systemImage: "text.badge.plus")
+                        }
+                    }
+                }
+            }
+            Section {
+                if model.connected {
+                    if model.folders.count > 1 {
+                        Button { Task { await model.back() } } label: {
+                            Label(L10n.booksBackToLibrary, systemImage: "chevron.backward")
+                        }
+                    }
+                    if model.loading { ProgressView(L10n.booksLoading) }
+                    else if model.entries.isEmpty { Text(L10n.booksFolderEmpty) }
+                    ForEach(model.entries) { entry in
+                        if entry.kind == .folder {
+                            Button { Task { await model.open(entry) } } label: {
+                                HStack {
+                                    Label(entry.name, systemImage: "folder")
+                                    Spacer()
+                                    Image(systemName: "chevron.forward").accessibilityHidden(true)
+                                }
+                            }
+                        } else {
+                            Button { model.select(entry) } label: {
+                                HStack {
+                                    Image(systemName: "arrow.down.circle").accessibilityHidden(true)
+                                    VStack(alignment: .leading) {
+                                        Text((entry.name as NSString).deletingPathExtension)
+                                        if let size = entry.size, size <= UInt64(Int64.max) {
+                                            Text(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)).font(.caption)
+                                        }
+                                    }
+                                }
+                            }
+                            .disabled(model.downloadingName != nil)
+                            .accessibilityHint(L10n.booksDownloadHint)
+                        }
+                    }
+                    Button(L10n.booksRefresh) { Task { await model.refresh() } }
+                        .disabled(model.loading)
+                    Button(L10n.booksDisconnect) { Task { await model.disconnect() } }
+                        .disabled(model.connecting)
+                } else {
+                    Label(L10n.booksLibraryTitle, systemImage: "books.vertical")
+                        .font(.title2.bold())
+                    Text(L10n.booksLibraryDescription)
+                    if model.configuration != nil {
+                        Button(L10n.booksConnect) { Task { await model.connect() } }
+                            .disabled(model.connecting)
+                        if model.connecting { ProgressView() }
+                    } else { Text(L10n.booksConnectionPending) }
+                }
+            } header: {
+                Text(model.folders.last?.title ?? L10n.booksLibraryTitle)
+            }
         }
-        .background(AppTheme.color(for: .primaryUi01, theme: theme).ignoresSafeArea())
+        .scrollContentBackground(.hidden)
+        .foregroundStyle(AppTheme.color(for: .primaryText01, theme: theme))
+        .tint(AppTheme.color(for: .primaryInteractive01, theme: theme))
+        .background(AppTheme.color(for: .primaryUi01, theme: theme))
+        .task { await model.start() }
+        .refreshable { await model.refresh() }
+        .alert(L10n.booksTitle, isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })) {
+            Button(L10n.ok) { model.errorMessage = nil }
+        } message: { Text(model.errorMessage ?? "") }
     }
 }

@@ -6673,6 +6673,41 @@
 /* Honest setup state in the first personal build, before Dropbox authorization is implemented. */
 "books_connection_pending" = "Your library will appear here after Dropbox connection setup is complete.";
 
+/* Dropbox sign-in button in the personal audiobook library. */
+"books_connect" = "Connect Dropbox";
+/* Removes Dropbox credentials from this device; downloaded audio remains. */
+"books_disconnect" = "Disconnect Dropbox on this device";
+/* Button for requesting a fresh list of the current folder. */
+"books_refresh" = "Refresh library";
+/* Heading for audiobooks already downloaded and available offline. */
+"books_on_this_device" = "On this device";
+/* Returns to the enclosing folder in the audiobook library. */
+"books_back_to_library" = "Back to parent folder";
+/* Shown while requesting Dropbox metadata, without downloading audio. */
+"books_loading" = "Loading library…";
+/* Empty folder message after a successful listing. */
+"books_folder_empty" = "No audio files or folders here.";
+/* Stage after downloading, while checking integrity and playable audio. */
+"books_validating" = "Checking audio…";
+/* Download limitation in the first version; final audio works offline. */
+"books_download_keep_open" = "Keep Books open until the download finishes.";
+/* VoiceOver hint for a remote audio file row. */
+"books_download_hint" = "Downloads this book to the device and adds it to Up Next.";
+/* Confirmation after queue insertion. %1$@ is the book title. */
+"books_added_to_queue" = "Added to Up Next: %1$@";
+/* Dropbox access is missing, expired, denied, or cannot be saved in Keychain. */
+"books_error_authorization" = "Please reconnect Dropbox to allow this device to read your audiobook library.";
+/* A Dropbox API request failed or returned unexpected metadata. */
+"books_error_response" = "The library could not be read. Check your connection and Dropbox access, then try again.";
+/* The downloaded bytes or revision do not match the selected, pinned book version. */
+"books_error_changed" = "This copy could not be verified against the saved book version. Your listening progress is safe. Try again later.";
+/* File contains no playable audio, has invalid duration, or has an unsupported format. */
+"books_error_audio" = "This file does not contain supported, playable audio.";
+/* Insufficient device storage, checked before starting a new book download. */
+"books_error_disk_space" = "There is not enough free storage to download this book.";
+/* A book could not be stored durably; it has not been added to the listening queue. */
+"books_error_persistence" = "The book could not be saved on this device. Please try again.";
+
 /* Empty podcast library guidance when discovery is accessible inside Podcasts rather than in a separate tab. */
 "podcast_grid_discovery_message" = "Find your first podcast using search, or browse recommendations below.";
 

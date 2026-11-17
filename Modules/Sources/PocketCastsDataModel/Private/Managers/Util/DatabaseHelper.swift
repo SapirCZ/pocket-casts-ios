@@ -942,6 +942,27 @@ class DatabaseHelper {
             }
         }
 
+        if schemaVersion < 77 {
+            do {
+                try db.executeUpdate("""
+                    CREATE TABLE PersonalBook (
+                        uuid TEXT PRIMARY KEY NOT NULL,
+                        accountID TEXT NOT NULL,
+                        fileID TEXT NOT NULL,
+                        metadata TEXT NOT NULL,
+                        playedUpTo REAL NOT NULL DEFAULT 0,
+                        duration REAL NOT NULL DEFAULT 0,
+                        playingStatus INTEGER NOT NULL DEFAULT 1,
+                        UNIQUE(accountID, fileID)
+                    );
+                    """, values: nil)
+                schemaVersion = 77
+            } catch {
+                failedAt(77)
+                return
+            }
+        }
+
         db.commit()
     }
 }

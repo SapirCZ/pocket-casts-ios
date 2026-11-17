@@ -188,11 +188,11 @@ class UpNextDataManager {
             do {
                 if uuids.isEmpty {
                     try db.executeUpdate(
-                        "DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_id = ?",
+                        "DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_id = ? AND episodeUuid NOT IN (SELECT uuid FROM PersonalBook)",
                         values: [UpNextDataManager.upNextPlaylistId]
                     )
                 } else {
-                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid NOT IN (\(DataHelper.convertArrayToInString(uuids))) AND playlist_id = ?", values: [UpNextDataManager.upNextPlaylistId])
+                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid NOT IN (\(DataHelper.convertArrayToInString(uuids))) AND playlist_id = ? AND episodeUuid NOT IN (SELECT uuid FROM PersonalBook)", values: [UpNextDataManager.upNextPlaylistId])
                 }
             } catch {
                 FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesNotIn error: \(error)")

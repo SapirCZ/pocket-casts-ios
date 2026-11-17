@@ -65,17 +65,50 @@ This is local to those commands and does not change the Mac's Keychain settings.
 - The Dropbox source folder has been confirmed by the owner. Its path and identifiers
   are kept in ignored local setup artifacts rather than this public repository.
 - A dedicated Dropbox developer app was created with the owner's explicit account
-  choice and API-terms consent. Its native OAuth connection and file-read scopes
-  still need implementation/configuration; no access token was generated.
+  choice and API-terms consent. Read scopes and the native callback URI have been
+  configured with separate owner approval. No developer-console token or client secret is used.
 - Books replaces Discover in the tab bar. Podcast search remains in Podcasts, and
   Discover deep links open within that tab's navigation stack.
-- The first Books screen explains the library and shows its pending connection state.
-  A read-only Dropbox listing client handles folders, audio candidates, pagination,
-  and shared-folder namespaces; OAuth is not connected yet.
-- Six focused `DropboxLibraryClientTests` passed on the iOS 26.5 Intel simulator.
+- Books implements native Dropbox PKCE sign-in, folder browsing, download progress,
+  cancellation, and a list of local books usable without Dropbox credentials.
+- Downloads are streamed to a temporary file on disk. Before queue insertion, the
+  app verifies the pinned revision, byte count, Dropbox content hash, playable audio
+  track, and finite positive duration. MP4 containers must actually contain audio.
+- A separate `PersonalBook` table preserves identity and playback progress after
+  audio/UserEpisode deletion. Repeated selection reuses the same local episode.
+- 105 selected tests passed on the iOS 26.5 Intel simulator: catalog, OAuth,
+  MP3/M4B import, file integrity, retry/cancellation, book persistence, and existing
+  playback queue/user-file persistence regressions. The UnitTests plan now points
+  to the current consolidated `Modules` package so module tests actually run.
   Visual checks confirmed the Books tab, Discover navigation from Podcasts, and
   Hebrew podcast search results for “שיר אחד”.
-- Device signing, audio downloads, book records, bookmarks, and journal features are pending.
+- Native sign-in and live-download verification are in progress. Device signing,
+  personal bookmarks, bedtime anchors, and journal/export features remain pending.
+
+## Local Books configuration
+
+Run `python3 scripts/personal/configure-books.py` before opening/building in Xcode.
+The bootstrap script also runs it. It reads the ignored `artifacts/dropbox-app.json`
+and `artifacts/library-source.json` and generates ignored
+`podcasts/Main/Books/BooksLocalConfiguration.json`, bundled into this personal build.
+The configuration contains the public client ID and the selected library identifiers,
+never tokens or an app secret. Without local configuration, Books shows a setup state.
+
+Register `db-<clientID>://oauth` as the exact Dropbox redirect URI. Enable public
+clients and read scopes `account_info.read`, `files.metadata.read`, `files.content.read`.
+The native session uses S256 PKCE, a random state, exact callback checks, and short-lived
+access tokens with refresh tokens in this device's Keychain. Disconnecting removes
+local credentials and keeps downloaded books.
+
+In this version, keep Books open until downloading/validation finishes. An interrupted
+download can be retried; partial or invalid files do not enter Up Next. A verified file
+moved into place before a crash can be recovered on the next selection. The source
+revision is pinned to protect playback positions when Dropbox audio is replaced.
+
+Books use the existing local player and queue, with automatic Pocket Casts uploads and
+file metadata sync blocked. While the queue contains personal books, its Pocket Casts
+cloud queue sync is paused so remote changes cannot remove local books. Normal podcast
+queue sync resumes when no personal books remain queued. This does not affect playback.
 
 ## Library preparation
 
@@ -108,3 +141,6 @@ To rerun the catalog tests on an installed simulator:
 env DEVELOPER_DIR=/Applications/Xcode-26.6.0.app/Contents/Developer \
   make test_staging ONLY_TESTING=PocketCastsTests/DropboxLibraryClientTests
 ```
+
+Use `PocketCastsTests/BooksImportTests`, `PocketCastsTests/DropboxOAuthTests`, or
+`PocketCastsDataModelTests/PersonalBookTests` in `ONLY_TESTING` for the other Books checks.

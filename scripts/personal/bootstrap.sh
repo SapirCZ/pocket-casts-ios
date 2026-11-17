@@ -51,4 +51,5 @@ if [ ! -f podcasts/Credentials/LocalApiCredentials.swift ]; then
     make external_contributor
 fi
 mkdir -p artifacts
+python3 scripts/personal/configure-books.py
 make build_staging 2>&1 | tee artifacts/personal-build.log

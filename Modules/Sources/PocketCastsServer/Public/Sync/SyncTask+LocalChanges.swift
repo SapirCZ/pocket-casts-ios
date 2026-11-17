@@ -184,6 +184,7 @@ extension SyncTask {
     /// Retrieve any bookmarks that need to be sent to the server
     func changedBookmarks() -> [Api_Record]? {
         dataManager.bookmarks.bookmarksToSync()
+            .filter { dataManager.canSyncUserEpisode(uuid: $0.episodeUuid) }
             .map { .init(bookmark: $0) }
             .nilIfEmpty()
     }

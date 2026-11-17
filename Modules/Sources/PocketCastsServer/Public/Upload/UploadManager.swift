@@ -51,6 +51,7 @@ public class UploadManager: NSObject {
     }
 
     public func queueForLaterUpload(episodeUuid: String, fireNotification: Bool) {
+        guard DataManager.sharedManager.canSyncUserEpisode(uuid: episodeUuid) else { return }
         guard let episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid), !episode.uploaded() else { return }
 
         DataManager.sharedManager.saveEpisode(uploadStatus: .waitingForWifi, episode: episode)
@@ -122,6 +123,7 @@ public class UploadManager: NSObject {
     }
 
     private func shouldAddUpload(_ episodeUuid: String) -> Bool {
+        guard DataManager.sharedManager.canSyncUserEpisode(uuid: episodeUuid) else { return false }
         guard let episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid), let fileProtocol = ServerConfig.shared.syncDelegate?.userEpisodeFileProtocol, FileManager.default.fileExists(atPath: episode.pathToDownloadedFile(pathFinder: fileProtocol())) else { return false }
 
         if episode.uploadStatus == UploadStatus.notUploaded.rawValue || episode.uploadStatus == UploadStatus.uploadFailed.rawValue {
@@ -219,6 +221,7 @@ public class UploadManager: NSObject {
     }
 
     public func uploadImageFor(episode: UserEpisode, session: URLSession?) {
+        guard DataManager.sharedManager.canSyncUserEpisode(uuid: episode.uuid) else { return }
         guard episode.imageColor == 0 else { return }
 
         ApiServerHandler.shared.uploadImageRequest(episode: episode, completion: { uploadURL in

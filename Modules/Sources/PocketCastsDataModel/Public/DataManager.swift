@@ -664,6 +664,9 @@ public class DataManager {
             episodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         } else if let episode = episode as? UserEpisode {
             userEpisodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
+            dbQueue.write { db in
+                try? db.executeUpdate("UPDATE PersonalBook SET playedUpTo = ? WHERE uuid = ?", values: [playedUpTo, episode.uuid])
+            }
         }
     }
 
@@ -672,6 +675,9 @@ public class DataManager {
             episodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         } else if let episode = episode as? UserEpisode {
             userEpisodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
+            dbQueue.write { db in
+                try? db.executeUpdate("UPDATE PersonalBook SET playingStatus = ? WHERE uuid = ?", values: [playingStatus.rawValue, episode.uuid])
+            }
         }
     }
 
@@ -729,6 +735,9 @@ public class DataManager {
             episodeManager.saveEpisode(duration: duration, episode: episode, updateSyncFlag: updateSyncFlag, dbQueue: dbQueue)
         } else if let episode = episode as? UserEpisode {
             userEpisodeManager.saveEpisode(duration: duration, episode: episode, dbQueue: dbQueue)
+            dbQueue.write { db in
+                try? db.executeUpdate("UPDATE PersonalBook SET duration = ? WHERE uuid = ?", values: [duration, episode.uuid])
+            }
         }
     }
 

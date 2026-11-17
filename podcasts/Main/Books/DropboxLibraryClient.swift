@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsUtils
 
 /// Remote metadata only. Listing a library must never download its audio.
 struct DropboxLibraryEntry: Decodable, Equatable, Identifiable {
@@ -42,11 +43,15 @@ struct DropboxLibraryEntry: Decodable, Equatable, Identifiable {
 /// Read-only Dropbox API boundary. OAuth and durable book records are separate concerns.
 /// A mounted shared library can supply its namespace ID; IDs remain the browsing keys.
 struct DropboxLibraryClient {
-    enum LibraryError: Error, Equatable {
+    enum LibraryError: LocalizedError, Equatable {
         case authorizationRequired
         case requestFailed(statusCode: Int)
         case invalidResponse
         case invalidCursor
+
+        var errorDescription: String? {
+            self == .authorizationRequired ? L10n.booksErrorAuthorization : L10n.booksErrorResponse
+        }
     }
 
     let session: URLSession

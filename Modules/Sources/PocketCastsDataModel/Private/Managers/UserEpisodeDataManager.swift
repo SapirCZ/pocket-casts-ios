@@ -109,7 +109,7 @@ class UserEpisodeDataManager {
     }
 
     func unsyncedEpisodes(dbQueue: PCDBQueue) -> [UserEpisode] {
-        loadMultiple(query: "SELECT * from \(DataManager.userEpisodeTableName) WHERE titleModified > 0 OR imageColorModified > 0 OR playingStatusModified > 0 OR playedUpToModified > 0 OR durationModified > 0", values: nil, dbQueue: dbQueue)
+        loadMultiple(query: "SELECT * from \(DataManager.userEpisodeTableName) WHERE uuid NOT IN (SELECT uuid FROM PersonalBook) AND (titleModified > 0 OR imageColorModified > 0 OR playingStatusModified > 0 OR playedUpToModified > 0 OR durationModified > 0)", values: nil, dbQueue: dbQueue)
     }
 
     func findWhereNotNull(columnName: String, dbQueue: PCDBQueue) -> [UserEpisode] {

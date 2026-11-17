@@ -33,6 +33,8 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
     private static let processDataLock = NSObject()
 
     override func main() {
+        // Books are device-local. Keep this mixed queue local until its books are removed.
+        guard !DataManager.sharedManager.hasPersonalBooksInUpNext() else { return }
         // Skip sync when protected data is unavailable to prevent reading incorrect
         // UserDefaults values (which may return defaults instead of actual stored values)
         // This can happen when the app launches in background before first unlock after reboot
@@ -48,6 +50,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
     }
 
     override func apiTokenAcquired(token: String) {
+        guard !DataManager.sharedManager.hasPersonalBooksInUpNext() else { return }
         let trace = TraceManager.shared.beginTracing(eventName: "SERVER_UP_NEXT_SYNC")
         defer { TraceManager.shared.endTracing(trace: trace) }
 
@@ -88,6 +91,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
     }
 
     func createUpNextUrlRequest(token: String) -> (urlRequest: URLRequest, latestActionTime: Int64)? {
+        guard !DataManager.sharedManager.hasPersonalBooksInUpNext() else { return nil }
         guard let url = URL(string: ServerConstants.Urls.api() + "up_next/sync") else { return nil }
 
         let protoRequest = createUpNextSyncRequest()
@@ -164,10 +168,12 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
         // ensure that only one thread can be processing data at once. The code below isn't thread safe, and will lead to potential issues otherwise
         objc_sync_enter(UpNextSyncTask.processDataLock)
         defer { objc_sync_exit(UpNextSyncTask.processDataLock) }
+        guard !DataManager.sharedManager.hasPersonalBooksInUpNext() else { return }
 
         do {
             let response = try Api_UpNextResponse(serializedBytes: serverData)
             applyServerChanges(episodes: response.episodes)
+            guard !DataManager.sharedManager.hasPersonalBooksInUpNext() else { return }
 
             // save the server last modified so we can send it back next time. For legacy compatibility this is stored as a string
             UserDefaults.standard.set("\(response.serverModified)", forKey: ServerConstants.UserDefaults.upNextServerLastModified)
@@ -181,6 +187,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
     }
 
     private func applyServerChanges(episodes: [Api_UpNextResponse.EpisodeResponse]) {
+        guard !DataManager.sharedManager.hasPersonalBooksInUpNext() else { return }
         // When a new account is being created, the server creates an empty up next queue in the database and sends that to us.
         // To ensure that the device's local copy of the queue is maintained, we ignore the incoming remote data and instead
         // save our local copy and then send it back to the server.
@@ -443,7 +450,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
             let uuidArr = uuids.components(separatedBy: ",")
             var episodes = [Api_UpNextEpisodeRequest]()
             for uuid in uuidArr {
-                if let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid) {
+                if DataManager.sharedManager.canSyncUserEpisode(uuid: uuid), let episode = DataManager.sharedManager.findBaseEpisode(uuid: uuid) {
                     var episodeInfo = Api_UpNextEpisodeRequest()
                     episodeInfo.title = episode.displayableTitle()
                     episodeInfo.url = episode.downloadUrl ?? ""
@@ -462,6 +469,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
         }
 
         guard let uuid = action.uuid else { return nil }
+        guard DataManager.sharedManager.canSyncUserEpisode(uuid: uuid) else { return nil }
 
         // otherwise if it's not a replace just send the single episode
         var change = Api_UpNextChanges.Change()

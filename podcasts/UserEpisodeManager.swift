@@ -108,6 +108,10 @@ struct UserEpisodeManager {
     }
 
     static func deleteFromEverywhere(userEpisode: UserEpisode, removeFromPlaybackQueue: Bool = true) {
+        guard DataManager.sharedManager.canSyncUserEpisode(uuid: userEpisode.uuid) else {
+            deleteFromDevice(userEpisode: userEpisode, removeFromPlaybackQueue: removeFromPlaybackQueue)
+            return
+        }
         DataManager.sharedManager.saveEpisode(uploadStatus: .deleteFromCloudAndLocalPending, episode: userEpisode)
         NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: userEpisode.uuid)
 
