@@ -64,6 +64,9 @@ This is local to those commands and does not change the Mac's Keychain settings.
 - Visual inspection passed: the Pocket Casts welcome screen rendered on the simulator.
 - The Dropbox source folder has been confirmed by the owner. Its path and identifiers
   are kept in ignored local setup artifacts rather than this public repository.
+- A dedicated Dropbox developer app was created with the owner's explicit account
+  choice and API-terms consent. Its native OAuth connection and file-read scopes
+  still need implementation/configuration; no access token was generated.
 - Books replaces Discover in the tab bar. Podcast search remains in Podcasts, and
   Discover deep links open within that tab's navigation stack.
 - The first Books screen explains the library and shows its pending connection state.
