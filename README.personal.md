@@ -91,8 +91,10 @@ This is local to those commands and does not change the Mac's Keychain settings.
 - A separate phone-only personal project passed signed arm64 device builds and
   was installed as Sapir Books on an iPhone 15 Plus running iOS 26.6.1, including
   the local Books configuration. The bundle passed deep/strict signature verification.
-  First launch still requires checking the phone's developer trust; native Dropbox
-  authorization and live download/queue verification on the phone remain pending.
+  Owner-approved developer trust was completed, the app launched, and Books connected
+  to the real Dropbox library on the phone. A live MP3 from a nested folder downloaded
+  and passed import validation, appeared under On this device, and was visible as a
+  downloaded book in the native Up Next screen, ready to play without autoplay.
 - Personal bookmarks, bedtime anchors, and journal/export features remain pending.
 
 ## Local Books configuration
