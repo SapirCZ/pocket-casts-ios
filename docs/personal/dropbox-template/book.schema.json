@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Personal Books metadata v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "authors",
+    "language",
+    "audio"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "narrators": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "language": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "BCP-47 language tag when known; otherwise null."
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename"
+      ],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "pattern": "^audio\\.(mp3|m4a|m4b|mp4)$"
+        },
+        "originalFilename": {
+          "type": "string",
+          "minLength": 1
+        },
+        "durationSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "cover": {
+      "type": "string",
+      "enum": [
+        "cover.jpg",
+        "cover.png"
+      ]
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}

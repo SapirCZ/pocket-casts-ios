@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "a1b2c3d4-1234-4abc-8def-123456789abc",
+  "title": "Example book",
+  "authors": [],
+  "narrators": [],
+  "language": null,
+  "audio": {
+    "filename": "audio.mp3",
+    "originalFilename": "example-book.mp3"
+  }
+}
