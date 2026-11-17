@@ -8,6 +8,7 @@ import Kingfisher
 import SafariServices
 
 class PodcastListViewController: PCViewController, ShareListDelegate {
+    private lazy var fileImporter = PodcastOpmlFileImporter(presenter: self)
     let gridHelper = GridHelper()
     var refreshController: FullSyncRefreshController?
     var bannerAdModel: BannerAdModel?
@@ -512,6 +513,11 @@ class PodcastListViewController: PCViewController, ShareListDelegate {
         }
         badgesAction.submenu = { [weak self] in self?.makeBadgeOptionsPicker() }
         optionsPicker.addAction(action: badgesAction)
+
+        let importAction = OptionAction(label: L10n.podcastsImportFile, icon: "settings_import_podcasts") { [weak self] in
+            self?.fileImporter.present()
+        }
+        optionsPicker.addAction(action: importAction)
 
         let shareAction = OptionAction(label: L10n.podcastsShare, icon: "podcast-share") {
             let shareController = SharePodcastsViewController()

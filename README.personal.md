@@ -96,6 +96,11 @@ This is local to those commands and does not change the Mac's Keychain settings.
   and passed import validation, appeared under On this device, and was visible as a
   downloaded book in the native Up Next screen, ready to play without autoplay.
 - Personal bookmarks, bedtime anchors, and journal/export features remain pending.
+- The cover library and file-based subscription importer passed 17 focused tests and
+  a signed device build. The update was installed over the existing phone app. On the
+  iPhone, 28 subscriptions were imported from the original app's local OPML export;
+  the cover grid, real artwork, and downloaded-book filter were visually verified.
+  The existing downloaded book and paused listening queue were preserved.
 
 ## Local Books configuration
 
@@ -180,3 +185,21 @@ credentials are not copied.
 
 Keep enough disk space for device compilation. Xcode may copy a large optional
 system-symbol cache when opening the phone in its GUI; it is not the app download.
+
+## Cover library and podcast import
+
+Books uses a searchable cover grid with collection stacks, an On this device filter,
+and a compact card for an already downloaded book. Artwork comes from images in the
+selected Dropbox folder or embedded metadata in downloaded audio. Dropbox thumbnails
+and normalized local covers are cached on this device; browsing never downloads audio
+for a cover. Books without artwork have a generated book jacket with their title.
+
+The presentation was informed by the official App Store previews of
+[עברית](https://apps.apple.com/il/app/עברית/id418786826) and
+[Kindle](https://apps.apple.com/us/app/amazon-kindle-reading-app/id302584613).
+
+To migrate subscriptions, export an OPML file from the original app to Files. In this
+app, open **Podcasts → … → Import from file** and select it. This uses the existing
+Pocket Casts subscription importer, with stable podcast identities to avoid duplicates.
+OPML contains the subscription list; it does not carry listening history, episode
+positions, downloaded audio, or per-podcast settings.

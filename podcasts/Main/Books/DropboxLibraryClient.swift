@@ -38,6 +38,11 @@ struct DropboxLibraryEntry: Decodable, Equatable, Identifiable {
             return false
         }
     }
+
+    var isArtwork: Bool {
+        guard kind == .file, !name.hasPrefix("."), let id, !id.isEmpty, isDownloadable != false else { return false }
+        return ["jpg", "jpeg", "png", "webp", "tif", "tiff"].contains((name as NSString).pathExtension.lowercased())
+    }
 }
 
 /// Read-only Dropbox API boundary. OAuth and durable book records are separate concerns.
@@ -66,7 +71,7 @@ struct DropboxLibraryClient {
 
     /// Lists direct children and all response pages. Never returns a partial catalog on failure.
     /// Pass a Dropbox folder ID or a path relative to the configured namespace.
-    func listFolder(_ path: String) async throws -> [DropboxLibraryEntry] {
+    func listFolder(_ path: String, includeArtwork: Bool = false) async throws -> [DropboxLibraryEntry] {
         var page = try await request("list_folder", body: ListRequest(path: path))
         var entriesByID = [String: DropboxLibraryEntry]()
         var seenCursors = Set<String>()
@@ -75,7 +80,7 @@ struct DropboxLibraryClient {
             try Task.checkCancellation()
             for entry in page.entries {
                 guard let id = entry.id else { continue }
-                if entry.isLibraryItem {
+                if entry.isLibraryItem || (includeArtwork && entry.isArtwork) {
                     entriesByID[id] = entry
                 } else {
                     entriesByID.removeValue(forKey: id)

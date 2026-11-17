@@ -6667,6 +6667,39 @@
 /* Heading on the personal Dropbox audiobook library screen. */
 "books_library_title" = "My library";
 
+/* Small label above the personal book library title. */
+"books_eyebrow" = "YOUR AUDIOBOOKS";
+/* Library filter showing remote books and collections. */
+"books_all" = "All books";
+/* A folder of books displayed as a stack of covers. */
+"books_collection" = "Collection";
+/* Label on a book cover when no artwork is available. */
+"books_audiobook" = "Audiobook";
+/* Book is downloaded and available without a network connection. */
+"books_offline_ready" = "Ready offline";
+/* Search field filters the books and collections in the current folder. */
+"books_search_library" = "Search this shelf";
+/* No titles match the current search. */
+"books_search_empty" = "No books match your search.";
+/* Empty downloaded-books filter. */
+"books_no_downloads" = "Your downloaded books will appear here.";
+/* VoiceOver label for the library refresh/disconnect menu. */
+"books_library_options" = "Library options";
+/* Dropbox connection status in the library header. */
+"books_dropbox_connected" = "Connected to Dropbox";
+/* Opens the full list of downloaded books. */
+"books_see_all" = "See all";
+/* Button adds an already downloaded book to the native listening queue. */
+"books_add_to_queue" = "Add to Up Next";
+/* VoiceOver hint for a downloaded book. */
+"books_queue_hint" = "Adds this downloaded book to Up Next.";
+/* VoiceOver hint for a collection of books. */
+"books_open_collection_hint" = "Opens this collection.";
+/* Clears a book-library search query. */
+"books_clear_search" = "Clear search";
+/* Podcast-list menu opens the system picker for a local OPML subscriptions file. */
+"podcasts_import_file" = "Import from file";
+
 /* Explains how selecting an audiobook will work once Dropbox is connected. */
 "books_library_description" = "Browse your audiobook folder in Dropbox. Choose a book to download to this device and add to Up Next.";
 

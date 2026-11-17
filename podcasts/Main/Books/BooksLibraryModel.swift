@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
+import UIKit
 
 @MainActor
 final class BooksLibraryModel: ObservableObject {
@@ -28,6 +29,8 @@ final class BooksLibraryModel: ObservableObject {
     private let downloadService: BooksDownloadService
     private var downloadTask: Task<Void, Never>?
     private var listingGeneration = 0
+    private var artworkContents = [DropboxLibraryEntry]()
+    private var artworkFolders = [String: Task<[DropboxLibraryEntry], Error>]()
 
     init(configuration: BooksConfiguration? = BooksConfiguration.load(), presenter: BooksAuthenticationPresenter, downloadService: BooksDownloadService? = nil) {
         self.configuration = configuration
@@ -67,6 +70,8 @@ final class BooksLibraryModel: ObservableObject {
             listingGeneration += 1
             connected = false
             entries = []
+            artworkContents = []
+            artworkFolders = [:]
             if let configuration { folders = [Folder(id: configuration.folderID, title: L10n.booksLibraryTitle)] }
         } catch { report(error) }
     }
@@ -92,9 +97,13 @@ final class BooksLibraryModel: ObservableObject {
         entries = []
         defer { if generation == listingGeneration { loading = false } }
         do {
-            let listed = try await client.listFolder(folder.id)
+            let listed = try await client.listFolder(folder.id, includeArtwork: true)
             try Task.checkCancellation()
-            if generation == listingGeneration { entries = listed }
+            if generation == listingGeneration {
+                artworkContents = listed
+                artworkFolders = [:]
+                entries = listed.filter(\.isLibraryItem)
+            }
         } catch is CancellationError {
         } catch {
             if generation == listingGeneration { report(error) }
@@ -137,6 +146,30 @@ final class BooksLibraryModel: ObservableObject {
     }
 
     func cancelDownload() { downloadTask?.cancel() }
+
+    func artwork(for entry: DropboxLibraryEntry) async -> UIImage? {
+        guard let client = client(), let id = entry.id else { return nil }
+        var contents = artworkContents
+        if entry.kind == .folder {
+            let task = artworkFolders[id] ?? Task { try await client.listFolder(id, includeArtwork: true) }
+            artworkFolders[id] = task
+            guard let listed = try? await task.value else { return nil }
+            contents = listed
+        }
+        guard let image = BooksArtwork.cover(for: entry.kind == .file ? entry : nil, in: contents) else {
+            if let book = downloads.first(where: { $0.fileID == id }) { return await artwork(for: book) }
+            return nil
+        }
+        return await BooksArtworkCache.shared.image(key: "dropbox:\(configuration?.namespaceID ?? ""):\(image.id ?? ""):\(image.revision ?? "")") {
+            try await client.artworkData(for: image)
+        }
+    }
+
+    func artwork(for book: PersonalBook) async -> UIImage? {
+        guard let episode = downloadService.dataManager.findUserEpisode(uuid: book.id), episode.downloaded(pathFinder: downloadService.pathFinder) else { return nil }
+        let url = URL(fileURLWithPath: downloadService.pathFinder.pathForEpisode(episode))
+        return await BooksArtworkCache.shared.embeddedArtwork(at: url, key: "book:\(book.id):\(book.revision)")
+    }
 
     func queue(_ book: PersonalBook) {
         if downloadService.queueDownloaded(book) { addedTitle = book.title }

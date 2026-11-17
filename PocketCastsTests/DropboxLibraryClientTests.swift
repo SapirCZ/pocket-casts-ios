@@ -131,6 +131,54 @@ final class DropboxLibraryClientTests: XCTestCase {
         }
     }
 
+    func testArtworkListingIsOptInAndStillHidesHiddenImages() async throws {
+        LibraryURLProtocol.handler = { _ in
+            (200, try self.page([self.entry("file", "id:book", "Book.mp3"), self.entry("file", "id:cover", "cover.jpg"), self.entry("file", "id:hidden", ".cover.jpg")]))
+        }
+        let contents = try await client().listFolder("id:library", includeArtwork: true)
+        XCTAssertEqual(Set(contents.compactMap(\.id)), ["id:book", "id:cover"])
+        XCTAssertEqual(contents.filter(\.isLibraryItem).count, 1, "A cover must not become a downloadable audiobook")
+    }
+
+    func testArtworkRequestUsesAnImageThumbnailAndSharedNamespace() async throws {
+        let image = try JSONDecoder().decode(DropboxLibraryEntry.self, from: JSONSerialization.data(withJSONObject: entry("file", "id:cover", "Cover.jpg")))
+        let request = try await client(namespaceID: "shared-library").artworkRequest(for: image)
+        XCTAssertEqual(request.url?.path, "/2/files/get_thumbnail_v2")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/octet-stream")
+        XCTAssertNil(request.httpBody)
+        let arguments = try XCTUnwrap(request.value(forHTTPHeaderField: "Dropbox-API-Arg"))
+        let decoded = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(arguments.utf8)) as? [String: [String: String]])
+        XCTAssertEqual(decoded["resource"], [".tag": "path", "path": "id:cover"])
+        XCTAssertEqual(decoded["mode"], [".tag": "bestfit"], "Preserve the full cover instead of cropping its title")
+        XCTAssertEqual(decoded["size"], [".tag": "w1024h768"])
+        let pathRoot = try XCTUnwrap(request.value(forHTTPHeaderField: "Dropbox-API-Path-Root"))
+        XCTAssertEqual(try JSONSerialization.jsonObject(with: Data(pathRoot.utf8)) as? [String: String], [".tag": "namespace_id", "namespace_id": "shared-library"])
+    }
+
+    func testArtworkRequestRejectsAudioBeforeRequestingCredentials() async throws {
+        let audio = try JSONDecoder().decode(DropboxLibraryEntry.self, from: JSONSerialization.data(withJSONObject: entry("file", "id:book", "Book.mp3")))
+        let client = DropboxLibraryClient { XCTFail("Artwork must not request audio or credentials for it"); return "test-token" }
+        do {
+            _ = try await client.artworkRequest(for: audio)
+            XCTFail("Audio cannot be requested through the cover loader")
+        } catch { XCTAssertEqual(error as? DropboxLibraryClient.LibraryError, .invalidResponse) }
+    }
+
+    func testGenericFolderCoverIsNotAssignedToMultipleDifferentBooks() throws {
+        let contents = try [entry("file", "id:one", "One.mp3"), entry("file", "id:two", "Two.mp3"), entry("file", "id:cover", "cover.jpg")].map {
+            try JSONDecoder().decode(DropboxLibraryEntry.self, from: JSONSerialization.data(withJSONObject: $0))
+        }
+        XCTAssertNil(BooksArtwork.cover(for: contents[0], in: contents))
+        XCTAssertEqual(BooksArtwork.cover(for: contents[0], in: [contents[0], contents[2]])?.id, "id:cover")
+        XCTAssertEqual(BooksArtwork.cover(for: nil, in: contents)?.id, "id:cover", "A generic image may still represent the collection")
+    }
+
+    func testBookTitlesPreserveDottedFolderNames() {
+        XCTAssertEqual(BooksArtwork.title("J. R. R. Tolkien"), "J. R. R. Tolkien")
+        XCTAssertEqual(BooksArtwork.title("An Author - 2024 - A Title (Mystery)"), "A Title")
+        XCTAssertEqual(BooksArtwork.title("A_Title.MP3"), "A Title")
+    }
+
     private func client(namespaceID: String? = nil) -> DropboxLibraryClient {
         DropboxLibraryClient(session: session, namespaceID: namespaceID) { "test-token" }
     }
