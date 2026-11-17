@@ -34,7 +34,7 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
     private func makeEmptyStateView() -> EmptyStateView<Text, DefaultEmptyStateStyle> {
         EmptyStateView(
             title: L10n.podcastGridNoPodcastsTitle,
-            message: L10n.podcastGridNoPodcastsMsg,
+            message: L10n.podcastGridDiscoveryMessage,
             icon: { Image("podcastlist_smallgrid").renderingMode(.template) },
             actions: [
                 .init(title: L10n.podcastGridDiscoverPodcasts, action: {

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build the unmodified upstream staging app before implementing Books.
+# Build the personal staging app using its pinned Xcode.
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

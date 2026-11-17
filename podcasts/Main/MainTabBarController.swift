@@ -9,7 +9,7 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, discover, profile, upNext }
+    enum Tab: Int { case podcasts, filter, books, profile, upNext }
 
     var pcTabs = [Tab]()
 
@@ -103,7 +103,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTarBarTraitCollectionOnIpadForiOS18()
 
-        pcTabs = [.podcasts, .filter, .discover, .upNext, .profile]
+        pcTabs = [.podcasts, .filter, .books, .upNext, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -113,16 +113,15 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let filtersViewController = PlaylistsViewController()
         filtersViewController.tabBarItem = UITabBarItem(title: L10n.playlists, image: UIImage(named: "playlists_tab"), tag: pcTabs.firstIndex(of: .filter)!)
 
-        let discoverViewController = DiscoverCollectionViewController(coordinator: DiscoverCoordinator())
-
-        discoverViewController.tabBarItem = UITabBarItem(title: L10n.discover, image: UIImage(named: "discover_tab"), tag: pcTabs.firstIndex(of: .discover)!)
+        let booksViewController = BooksViewController()
+        booksViewController.tabBarItem = UITabBarItem(title: L10n.booksTitle, image: UIImage(systemName: "books.vertical"), tag: pcTabs.firstIndex(of: .books)!)
 
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
         let upNextViewController = UpNextViewController(source: .tabBar, showingInTab: true)
         upNextViewController.tabBarItem = upNextTabBarItem
-        vcsInTab = [podcastsController, filtersViewController, discoverViewController, upNextViewController, profileViewController]
+        vcsInTab = [podcastsController, filtersViewController, booksViewController, upNextViewController, profileViewController]
 
         displayEndOfYearBadgeIfNeeded()
 
@@ -184,9 +183,9 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
             viewDidAppearBefore = true
         }
 
-        // if this key was never set lets default to Discovery or Podcast depending of podcasts followed
+        // The personal build starts in Podcasts; Books has its own permanent tab.
         if UserDefaults.standard.object(forKey: Constants.UserDefaults.lastTabOpened) == nil {
-            selectedIndex = DataManager.sharedManager.podcastCount() > 0 ? Tab.podcasts.rawValue: Tab.discover.rawValue
+            selectedIndex = pcTabs.firstIndex(of: .podcasts) ?? 0
         }
 
         showInitialOnboardingIfNeeded()
@@ -428,29 +427,31 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
     }
 
     func navigateToDiscover(_ animated: Bool) {
-        switchToTab(.discover)
+        showDiscover(animated: animated)
     }
 
     func navigateToDiscover(category: String, animated: Bool) {
-        switchToTab(.discover)
-        if let index = pcTabs.firstIndex(of: .discover),
-           let navController = viewControllers?[safe: index] as? UINavigationController {
-            navController.popToRootViewController(animated: false)
-            if let discoverDelegate = navController.topViewController as? DiscoverDelegate {
-                discoverDelegate.navigateTo(category: category)
-            }
-        }
+        showDiscover(animated: animated)?.navigateTo(category: category)
     }
 
     func navigateToDiscover(listID: String, animated: Bool) {
-        switchToTab(.discover)
-        if let index = pcTabs.firstIndex(of: .discover),
-           let navController = viewControllers?[safe: index] as? UINavigationController {
-            navController.popToRootViewController(animated: false)
-            if let discoverDelegate = navController.topViewController as? DiscoverDelegate {
-                discoverDelegate.navigateTo(listID: listID)
-            }
+        showDiscover(animated: animated)?.navigateTo(listID: listID)
+    }
+
+    @discardableResult
+    private func showDiscover(animated: Bool) -> DiscoverCollectionViewController? {
+        guard switchToTab(.podcasts), let navController = selectedViewController as? UINavigationController else { return nil }
+        if let existing = navController.topViewController as? DiscoverCollectionViewController {
+            return existing
         }
+        navController.popToRootViewController(animated: false)
+        let controller = DiscoverCollectionViewController(coordinator: DiscoverCoordinator())
+        navController.pushViewController(controller, animated: animated)
+        return controller
+    }
+
+    func navigateToBooks() {
+        switchToTab(.books)
     }
 
     func navigateToUpNext(_ animated: Bool) {
@@ -1063,8 +1064,8 @@ private extension MainTabBarController {
             event = .podcastsTabOpened
         case .filter:
             event = .filtersTabOpened
-        case .discover:
-            event = .discoverTabOpened
+        case .books:
+            return
         case .profile:
             event = .profileTabOpened
         case .upNext:

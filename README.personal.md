@@ -61,15 +61,47 @@ This is local to those commands and does not change the Mac's Keychain settings.
 - `make build_staging` succeeded on the Intel Mac; the simulator app contains x86_64 and arm64 slices.
 - Installed and launched on an iPhone 17 Pro simulator running iOS 26.5. The process
   remained alive more than 13 minutes after launch.
-- Visual inspection is pending because the Mac was locked when opening Simulator.
-- No Dropbox account connection, device signing, or personal Books functionality yet.
+- Visual inspection passed: the Pocket Casts welcome screen rendered on the simulator.
+- The Dropbox source folder has been confirmed by the owner. Its path and identifiers
+  are kept in ignored local setup artifacts rather than this public repository.
+- Books replaces Discover in the tab bar. Podcast search remains in Podcasts, and
+  Discover deep links open within that tab's navigation stack.
+- The first Books screen explains the library and shows its pending connection state.
+  A read-only Dropbox listing client handles folders, audio candidates, pagination,
+  and shared-folder namespaces; OAuth is not connected yet.
+- Six focused `DropboxLibraryClientTests` passed on the iOS 26.5 Intel simulator.
+  Visual checks confirmed the Books tab, Discover navigation from Podcasts, and
+  Hebrew podcast search results for “שיר אחד”.
+- Device signing, audio downloads, book records, bookmarks, and journal features are pending.
 
 ## Library preparation
 
 [docs/personal/dropbox-template/AGENTS.md](docs/personal/dropbox-template/AGENTS.md)
-is a proposed instruction file for a future selected Dropbox library folder.
+is a proposed instruction file for the selected Dropbox library folder.
 The metadata schema and example are stored beside it. These are templates in the
 source repository, not a claim that the Dropbox folder has been created or changed.
 
 Keep real audio, real reading records, OAuth tokens, signing material, and local
 credentials out of this source repository.
+
+The selected folder contains both loose MP3/M4B files and nested series/book folders.
+Browse direct children on demand, keep folders navigable, and hide dot-prefixed
+technical entries and non-audio files. Do not treat each series folder as one book.
+An MP4 extension is only a candidate: validate that the actual file has playable audio
+before importing it. Existing files have not been moved or renamed.
+
+The native app needs its own Dropbox app registration and OAuth authorization;
+the connected chat tool does not provide credentials for an iOS app. The existing
+shared library requires **Full Dropbox** content access with read-only scopes
+`files.metadata.read` and `files.content.read`, rather than an isolated App Folder.
+Use PKCE and store refresh credentials in Keychain. Keep backup writes separate
+from the source-library connection until their destination is agreed.
+See Dropbox's [OAuth guide](https://docs.dropboxapi.com/dropbox-api/docs/oauth) and
+[folder listing reference](https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/files/list-folder-continue).
+
+To rerun the catalog tests on an installed simulator:
+
+```sh
+env DEVELOPER_DIR=/Applications/Xcode-26.6.0.app/Contents/Developer \
+  make test_staging ONLY_TESTING=PocketCastsTests/DropboxLibraryClientTests
+```

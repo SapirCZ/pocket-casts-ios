@@ -6661,3 +6661,18 @@
 /* tv home failed to load message */
 "tv_home_failed_to_load_title" = "Home failed to load";
 
+/* Title of the personal audiobook tab. */
+"books_title" = "Books";
+
+/* Heading on the personal Dropbox audiobook library screen. */
+"books_library_title" = "My library";
+
+/* Explains how selecting an audiobook will work once Dropbox is connected. */
+"books_library_description" = "Browse your audiobook folder in Dropbox. Choose a book to download to this device and add to Up Next.";
+
+/* Honest setup state in the first personal build, before Dropbox authorization is implemented. */
+"books_connection_pending" = "Your library will appear here after Dropbox connection setup is complete.";
+
+/* Empty podcast library guidance when discovery is accessible inside Podcasts rather than in a separate tab. */
+"podcast_grid_discovery_message" = "Find your first podcast using search, or browse recommendations below.";
+
