@@ -88,8 +88,10 @@ This is local to those commands and does not change the Mac's Keychain settings.
 - The content-download request pins revisions using `path: "rev:…"`; Dropbox rejects
   the retired separate `rev` argument. All 12 focused request/import/catalog tests
   passed after this correction.
-- Device signing, personal bookmarks, bedtime anchors, and journal/export features
-  remain pending.
+- A separate phone-only personal project passed an unsigned arm64 device build,
+  including the local Books configuration. Device signing/installation and live
+  verification on the phone remain pending.
+- Personal bookmarks, bedtime anchors, and journal/export features remain pending.
 
 ## Local Books configuration
 
@@ -150,3 +152,27 @@ env DEVELOPER_DIR=/Applications/Xcode-26.6.0.app/Contents/Developer \
 
 Use `PocketCastsTests/BooksImportTests`, `PocketCastsTests/DropboxOAuthTests`, or
 `PocketCastsDataModelTests/PersonalBookTests` in `ONLY_TESTING` for the other Books checks.
+
+## Personal iPhone build
+
+Generate a local phone project with your Apple development team ID:
+
+```sh
+python3 scripts/personal/configure-device.py --team YOURTEAMID
+```
+
+The ignored `.personal-device.xcodeproj` uses the same app sources, with a separate
+bundle identifier (`com.sapircz.pocketcasts.books`) and display name, **Sapir Books**.
+It keeps credential/localization generation, and omits Watch, extensions, and the
+upstream restricted entitlements for basic Personal Team testing. The original
+project and the installed Pocket Casts app remain separate. `--bundle-id` can
+override the personal identifier. Generated signing configuration stays local.
+
+The `Sapir Books` scheme uses StagingDebug. Connect and unlock the iPhone, then
+build it using Xcode with your Personal Team. First-time automatic signing needs
+Apple to register the device and create a development provisioning profile.
+Native Dropbox authorization must also be completed on the phone; simulator
+credentials are not copied.
+
+Keep enough disk space for device compilation. Xcode may copy a large optional
+system-symbol cache when opening the phone in its GUI; it is not the app download.

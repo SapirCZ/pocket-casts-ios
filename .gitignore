@@ -50,3 +50,4 @@ artifacts/*
 .claude/settings.local.json
 .claude/worktrees
 podcasts/Main/Books/BooksLocalConfiguration.json
+/.personal-device.xcodeproj/
