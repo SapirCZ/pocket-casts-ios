@@ -88,9 +88,11 @@ This is local to those commands and does not change the Mac's Keychain settings.
 - The content-download request pins revisions using `path: "rev:…"`; Dropbox rejects
   the retired separate `rev` argument. All 12 focused request/import/catalog tests
   passed after this correction.
-- A separate phone-only personal project passed an unsigned arm64 device build,
-  including the local Books configuration. Device signing/installation and live
-  verification on the phone remain pending.
+- A separate phone-only personal project passed signed arm64 device builds and
+  was installed as Sapir Books on an iPhone 15 Plus running iOS 26.6.1, including
+  the local Books configuration. The bundle passed deep/strict signature verification.
+  First launch still requires checking the phone's developer trust; native Dropbox
+  authorization and live download/queue verification on the phone remain pending.
 - Personal bookmarks, bedtime anchors, and journal/export features remain pending.
 
 ## Local Books configuration
